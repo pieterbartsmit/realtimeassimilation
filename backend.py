@@ -105,16 +105,17 @@ def createJSONblock( epochtime , block, ids, pointdata,modelName,modelSource , c
     meshSamples['period']     = block['Tm01'].reshape( ( size ) ).tolist()
     meshSamples['direction']  = directions.tolist()
 
-    #
+
     if ( 'Vel_x' in block ):
         #
+        if 'Depth' in block:
+            #
+            msk = np.isnan( block['Depth'] )
+            block['Vel_x'][msk] = np.nan
+            block['Vel_y'][msk] = np.nan
+            #
+        #    
         meshSamples['U']   = block['Vel_x'].reshape( ( size ) ).tolist()
-        #
-    #
-
-    #
-    if ( 'Vel_y' in block ):
-        #
         meshSamples['V']   = block['Vel_y'].reshape( ( size ) ).tolist()
         #
     #
