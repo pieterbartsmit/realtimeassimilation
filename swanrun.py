@@ -468,8 +468,10 @@ class swanrun:
 
             if self.source['dirspec'][0].lower() == 'ww3':
                 #
-                print('   - Downloading directional spectrum from NOAA ww3 as model Prior')
-                prior = wavewatch3.getSpectrum(epochtime,self.source['dirspec'][1])
+                print('   - Downloading directional spectrum from NOAA ww3'
+                          +' as model Prior')
+                prior = wavewatch3.getSpectrum(
+                    epochtime,self.source['dirspec'][1] )
                 prior.torad()
                 prior.interpFreq( spec.f )
                 #dirspec.constraint( -90 , 180)          
@@ -483,18 +485,50 @@ class swanrun:
 
             if len( self.spotters.fullSpecIndices ) < 1:
                 #
-                # If no recent observed full spectra data is available, use ww3 as a fallback
+                # If no recent observed full spectra data is available, use ww3
+                # as a fallback
                 #
                 dirspec = prior
-                #ModelPriorSpec
+            elif len( self.spotters.fullSpecIndices ) < 3:
+                #
+                # Assimilation with model prior
+                #
+                dirspec=asim.optimize(
+                    spec , activeSpotterList = self.spotters.fullSpecIndices,
+                    removeSingularValues=.9, ModelPriorSpec=prior,
+                    method=['norm'],regval=(1.,1.,1.,1.)
+                    )
+                #                
             else:
                 #
-                dirspec=asim.optimize( spec , activeSpotterList = self.spotters.fullSpecIndices,
-                                       removeSingularValues=.9,method=['norm'],regval=(1.,1.,1.,1.)  )
-                dirspec.todeg()
-                dirspec.tof()
+                # Assimilation
+                #
+                dirspec=asim.optimize(
+                    spec , activeSpotterList = self.spotters.fullSpecIndices,
+                    removeSingularValues=.9,
+                    method=['norm'],regval=(1.,1.,1.,1.)
+                    )
                 #
             #endif
+            #
+            if prior is not None:
+                #
+                if ( (dirspec.Hm0() > 2. * prior.Hm0() ) and
+                         ( dirspec.Hm0() > 1.) ):
+                    #Sanity check, if there is a large difference in
+                    #predictions fall back to ww3 prior prediction
+                    print("Warning, assimilation waveheights conflict")
+                    print("  asim waveheight at boundary:"
+                              + str(dirspec.Hm0() ) )
+                    print("  ww3 waveheight at boundary:"
+                              + str(prior.Hm0() ) )
+                    print("Using ww3 boundary as failsafe")
+                    dirspec = prior
+                    #
+                #
+            #
+            dirspec.todeg()
+            dirspec.tof()                            
             #
         else:
             #
