@@ -124,7 +124,8 @@ def getSpec( stationID='46011' , workingdirectory = None, epochtime=None ):
     for index,file in enumerate(files):
         #
         url = baseurl + stationID + file        
-        [tmp,freq,dates] = getSpectralData( url , workingdirectory = workingdirectory,kind=kind[index] )
+        [tmp,freq,dates] = getSpectralData( url ,
+                        workingdirectory = workingdirectory,kind=kind[index] )
         data.append(tmp)
         #
 
@@ -137,8 +138,8 @@ def getSpec( stationID='46011' , workingdirectory = None, epochtime=None ):
     msk = data[3] == 999.0
     msk = data[4] == 999.0
 
-    data[3][msk] = np.nan
-    data[4][msk] = np.nan    
+    data[3][msk] = 0.
+    data[4][msk] = 0.
 
     #D(f,A) = (1/PI)*(0.5+R1*COS(A-ALPHA1)+R2*COS(2*(A-ALPHA2))).
     

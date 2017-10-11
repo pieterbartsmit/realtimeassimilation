@@ -321,7 +321,7 @@ class tSpotterlist:
             #
             print( '- could not add spotter ' + spotterID )
             print( str(e) )
-            if not self.lat==None:
+            if not self.lat is None:
                 #getFakeData( self , spotterID, num ):
                 # including a fake spotter instead
                 #
