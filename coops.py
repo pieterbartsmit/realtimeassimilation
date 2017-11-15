@@ -12,14 +12,16 @@ def getTideData( epochtime, station='',workingdirectory='./'):
     begin_date = time.strftime("%Y%m%d" , time.gmtime(epochtime) )
     end_date    = begin_date
     
-    data = getData( station, kind=0,begin_date='',end_date='',workingdirectory=workingdirectory)
+    data = getData( station, kind=0,begin_date='',end_date='',
+                        workingdirectory=workingdirectory)
 
     it = (np.abs(data['t']-epochtime)).argmin()
     
     return( {'z':data['z'][it] })
     #
 
-def getData( station, kind=0,begin_date='',end_date='',datum='MSL',time_zone='GMT',units='metric',workingdirectory='./'):
+def getData( station, kind=0,begin_date='',end_date='',datum='MSL',
+                 time_zone='GMT',units='metric',workingdirectory='./'):
     #
     # Grab wind (kind=1) or tide (kind=0) data from the coops servers for a given stationid. 
     #

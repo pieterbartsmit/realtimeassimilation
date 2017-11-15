@@ -61,7 +61,22 @@ def getWindData( stationID='46011' , filename='ndbcwind.csv' ):
     return(data)
 #    time.time
     
-def getSpectralData( url , workingdirectory = None,kind=0 ):
+def getSpectralData( url , workingdirectory = None,kind=0,historical=False ):
+    '''
+    Purpose:
+
+    Function to retrieve spectral data from ndbc.
+
+    Input:
+    url              :: location of the data on the server
+    workingdirectory :: were to store temporary files (files are first 
+    downloaded, then interpreted)
+    kind             :: =0 interpret as spectral files
+    =1 interpret as directional (a1,b1 etc.) spectral files
+    historical       :: =False; realtime data format
+    =True; historical data format
+
+    '''
     import code
     import numpy as np
     import urllib.request        
@@ -78,19 +93,30 @@ def getSpectralData( url , workingdirectory = None,kind=0 ):
         workingdirectory = '.' + os.path.sep
         #
     #
-    filename = workingdirectory + 'temp.csv'
-    [filename , header ] = urllib.request.urlretrieve(url, filename)
-    data = pd.read_csv( filename,engine='python', delim_whitespace=True,skiprows=[0],header=None )
-    dates = list()
     
-    E    = data.loc[ : , 6-kind : data.shape[1] : 2 ]
-    freq = data.loc[ 0 , 7-kind : data.shape[1] : 2 ]
-    E=E.values
-    freq =freq.apply( lambda x: x.replace('(',''))
-    freq = freq.apply( lambda x: x.replace(')',''))
-    freq = freq.apply( lambda x: float(x) )
-    freq = freq.values
+    if historical:
+        filename = workingdirectory + 'temp.gz'
+        [filename , header ] = urllib.request.urlretrieve(url, filename)
+        data = pd.read_csv( filename,engine='python',
+                            delim_whitespace=True )
+        E    = data.iloc[ : , 6-kind :  ].values
+        freq = np.array( [ float(f) for f in data.columns[ 6-kind :  ].tolist()] )
 
+    else:
+        filename = workingdirectory + 'temp.csv'        
+        [filename , header ] = urllib.request.urlretrieve(url, filename)
+        data = pd.read_csv( filename,engine='python',
+                            delim_whitespace=True,skiprows=[0],header=None )
+        E    = data.loc[ : , 6-kind : data.shape[1] : 2 ]
+        freq = data.loc[ 0 , 7-kind : data.shape[1] : 2 ]
+        E=E.values
+
+        freq =freq.apply( lambda x: x.replace('(',''))
+        freq = freq.apply( lambda x: x.replace(')',''))
+        freq = freq.apply( lambda x: float(x) )
+        freq = freq.values
+
+    dates = list()        
     for ind,row in data.iterrows():
         #
         date = datetime( int(row[0]) , int(row[1]) , int(row[2]), \
@@ -102,8 +128,36 @@ def getSpectralData( url , workingdirectory = None,kind=0 ):
     #
     return( E , freq , dates )
 
+#
+def getHistorical( years ,  stationID='46011' , workingdirectory = None ):
+    #
+    # Get historical data from ndbc
+    #
+    import numpy as np
+    import spectral
+    #
+    start = True
+    for year in years:
+        #
+        url = 'http://www.ndbc.noaa.gov/data/historical/swden/' + stationID + \
+            'w' + '{:4d}'.format(year) + '.txt.gz'
+        E, f , date = getSpectralData( url , workingdirectory = None,kind=0,
+                                           historical=True )
+        if start:
+            start = False
+            spec = E
+            freq = f
+            dates = date
+        else:
+            spec = np.concatenate( (spec , E), axis=0 )
+            dates = np.concatenate( (dates , date), axis=0 )
+        #
+    #
+    spec = spectral.spectrum1d( {'E':spec , 'f':freq, 'loc':dates } )      
+    return( spec )
 
-def getSpec( stationID='46011' , workingdirectory = None, epochtime=None ):
+def getSpec( stationID='46011' , workingdirectory = None, epochtime=None,
+                 historical = False ):
     import code
     import numpy as np
     import urllib.request        
@@ -152,8 +206,8 @@ def getSpec( stationID='46011' , workingdirectory = None, epochtime=None ):
     a2 = R2 * np.cos(angle2)
     b2 = R2 * np.sin(angle2)
     
-    spec = spectral.spectrum1d( {'E':E , 'f':freq, 'loc':dates,'a1':a1,'b1':b1,'a2':a2,'b2':b2 } )
-    #data['date'] = dates
+    spec = spectral.spectrum1d( {'E':E , 'f':freq, 'loc':dates,
+                                     'a1':a1,'b1':b1,'a2':a2,'b2':b2 } )
 
     if epochtime is not None:
         #
@@ -174,7 +228,8 @@ def getSpec( stationID='46011' , workingdirectory = None, epochtime=None ):
 
 def getLatestSpec(stationID='46012',workingDirectory=None):
     #
-    spec, lat,lon, epochtime = getSpec( stationID=stationID , workingdirectory = workingDirectory, epochtime=-1 )
+    spec, lat,lon, epochtime = getSpec( stationID=stationID ,
+                            workingdirectory = workingDirectory, epochtime=-1 )
     return( spec,lat,lon,epochtime)
     #
 
