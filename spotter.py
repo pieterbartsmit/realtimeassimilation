@@ -9,7 +9,8 @@ class spotres:
 
         if not 'spec' in data:
             #
-            self.Hsig       = data['bulk']['significantWaveHeight']
+            
+            self.Hsig       = data['waves'][0]['significantWaveHeight']
             self.Tp         = data['bulk']['peakPeriod']
             self.Tm01       = data['bulk']['meanPeriod']
             self.peakDir    = data['bulk']['peakDirection']
@@ -303,7 +304,7 @@ class tSpotterlist:
     def addSpotter( self , spotterID,num ):
         #
         #spotter = self.getData( spotterID,endpoint=self.endpoint,num=num )
-        try:
+        if True: #try:
             spotter = self.getData( spotterID,endpoint=self.endpoint,num=num )
         
             self.spotters.append( spotter )
@@ -317,7 +318,7 @@ class tSpotterlist:
                 #
             #        
             self.numSpot = self.numSpot + 1
-        except Exception as e:
+        else: #except Exception as e:
             #
             print( '- could not add spotter ' + spotterID )
             print( str(e) )
@@ -595,7 +596,8 @@ class tSpotterlist:
             data = json.loads( response.read().decode('utf-8') )
             #
             #... and return a spot datatype
-            spot = spotres( data['data']['latestData'] )
+            print(data)
+            spot = spotres( data['data'] )
             #
         #endif
         return( spot )

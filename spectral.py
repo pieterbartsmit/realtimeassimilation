@@ -699,7 +699,7 @@ class spectrum1d(tSpectrum):
         # make sure it as a leading iloc dimension
         Ef = np.squeeze(self.correctDim()[iloc,:])
         # Plot directional spectrum
-            
+        plt.figure    
         plt.plot( self.f, Ef )        
         plt.show(block=False)
         return()
@@ -777,7 +777,7 @@ class spectrum1d(tSpectrum):
         fn = numpy.tile( fn , [self.nloc,1] )
         df = numpy.tile( df , [self.nloc,1] )
         E  = self.correctDim() * fn
-        
+        E[ numpy.isnan(E) ] = 0.
         m = numpy.sum( E * df  , axis=-1)
         #
         if len(m) == 1:

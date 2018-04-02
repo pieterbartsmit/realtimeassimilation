@@ -43,7 +43,7 @@ def writePoints(  epochtime , filename , data , dataNames , formatting ):
         fid.write( '  date/time , epochtime ')
         for name in dataNames:
             #
-            fid.write( ', ' + name )
+            fid.write( ', ' + str(name) )
             #
         #endif
         #
