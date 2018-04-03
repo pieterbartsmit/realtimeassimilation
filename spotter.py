@@ -145,6 +145,9 @@ class tSpotterlist:
         self.available = []
         self.f = np.zeros(39)
         self.isaliveTime = isaliveTime
+        import sys
+        import platform
+
 
         #
         #Are these Spotters 'matlab spotters'; i.e. spectra created from sdcard
@@ -152,7 +155,16 @@ class tSpotterlist:
         self.matlabSpotter=matlabSpotter #Switch to toggle to matlabspotter
         self.targetTime=targetTime       #the targetTime to get data
         if matlabSpotterDir is None:
-            matlabSpotterDir='/Users/pieterbartsmit/Google Drive/Workingmanuscripts/innershelf/dataProcessing/filtered/2share'
+            #
+            if platform.system() == 'Darwin':
+                #
+                matlabSpotterDir='/Users/pieterbartsmit/Google Drive/Workingmanuscripts/innershelf/dataProcessing/filtered/2share'
+                #
+            else:
+                #
+                appdir = '/mnt/2ndHDD/models/innershelf/obs/'
+                #            
+            
         self.matlabSpotterDir = matlabSpotterDir
         
         if token is not None:
