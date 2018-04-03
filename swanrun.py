@@ -331,12 +331,17 @@ class swanrun:
         outputlist.append( swan.output( \
             self.spotters.spotters , name , ['XP','YP','HS','TM01','DIR','DSPR','DEP','PDIR','RTP'] ) )
 
+        if dat['currents'] is not None:
+            inputFields = [dat['currents']]
+        else:
+            inputFields = None
+
         name = workingdirectory + '/' + self.commandfilename
         swan.writeInput( name       , self.cgrid                           , \
                          self.bat   , self.bounlist                        , \
                          dat['wind'], dat['tide']                          , \
                          outputlist , self.nestedgridlist, physics=self.physics,
-                             inputFields=[dat['currents']] )                                     
+                             inputFields=inputFields )                                     
         #
         #
         # 5) Call any nested runs (if applicable)

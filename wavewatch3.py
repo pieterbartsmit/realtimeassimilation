@@ -8,7 +8,7 @@ import spectral
 def getSpectrum( epochtime , stationID ):
     #
     import spectral
-    res = getLatestDirectionalSpectrumFromServer(buoynum=stationID)
+    res = getLatestDirectionalSpectrumFromServer(date=epochtime,buoynum=stationID)
 
     spec = res['spec'].interpLoc( epochtime )
     
@@ -34,7 +34,11 @@ def getLatestDirectionalSpectrumFromServer( date='',buoynum=0  ):
     # In no date or buoy are given, it defaults to "today (in UTC!)" and buoy 46011 - which just
     # happens to be the buoy for the ONR Innershelf experiment.
     #
-    # PBS - Juli, 2017
+    # PBS - July, 2017
+    #
+    # extended to grab from data.noda.noaa.gov/pub/data for historical dates
+    #
+    # PBS - Apr, 2018
     #---------------------------------------------------------------------------
     #
     # Code description:
@@ -44,7 +48,28 @@ def getLatestDirectionalSpectrumFromServer( date='',buoynum=0  ):
     # 4) return frequency/direction spectrum
     #
 
-
+    def getUrl( day ):
+        #
+        import calendar
+        
+        yy = day[0:4]
+        mm = day[4:6]
+        dd = day[6:8]        
+        epoch = calendar.timegm( (int(yy),int(mm),int(dd),0,0,0) )
+        epochnow = calendar.timegm( time.gmtime() )
+        #https://data.nodc.noaa.gov/ncep/nww3/2017/09/points/multi_1_base.buoys_spec.201709/multi_1.46011.SPEC.201709
+        #https://data.nodc.noaa.gov/ncep/nww3/2017/09/points/multi_1_base.buoys_spec.201709/multi_1.46011.spec201709
+        if ( epoch - epochnow > -3600*24*3 ):
+            url = 'http://nomads.ncep.noaa.gov/pub/data/nccf/com/wave/prod/multi_1.' \
+              + day + '/bulls.t00z/multi_1.' + buoynum + '.spec'
+        else:
+            url = 'https://data.nodc.noaa.gov/ncep/nww3/' + yy +'/' + mm + \
+                '/points/multi_1_base.buoys_spec.' + yy + mm + '/' +           \
+                'multi_1.' + buoynum + '.SPEC.' + yy + mm
+            print(url)
+        #
+        return( url )
+    
     #---------------------------------------------------------------------------
     # 1) sanity check
     #
@@ -59,9 +84,11 @@ def getLatestDirectionalSpectrumFromServer( date='',buoynum=0  ):
         #
         if type(date) != list:
             #
-            date = [date]
+            date = [time.strftime("%Y%m%d" , time.gmtime(date) ) ]
             #
         #
+
+        
     #fi
         
     if buoynum==0:
@@ -82,9 +109,11 @@ def getLatestDirectionalSpectrumFromServer( date='',buoynum=0  ):
 
     # Pick the latest existing date in the dates list:
     found = False
+    #https://data.nodc.noaa.gov/ncep/nww3/2017/09/points/multi_1_base.buoys_spec.201709/
     for day in date:
-        url = 'http://nomads.ncep.noaa.gov/pub/data/nccf/com/wave/prod/multi_1.' \
-            + day + '/bulls.t00z/multi_1.' + buoynum + '.spec'
+        #url = 'http://nomads.ncep.noaa.gov/pub/data/nccf/com/wave/prod/multi_1.' \
+        #    + day + '/bulls.t00z/multi_1.' + buoynum + '.spec'
+        url = getUrl( day )
         try:
             #
             # Check if the file exists on server

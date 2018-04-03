@@ -91,20 +91,12 @@ class spotres:
             self.updatetime = ['0','0']
             self.epochtimes  = [ data['epochtime'],data['epochtime'] ]        
             self.epochtime   = data['epochtime']
-            self.fullMessage = True
 
-            f          = np.ones(39)
-            df         = np.ones(39)
-            df[0:33]   = 0.009765625
-            df[33:38]  = 3 * 0.009765625
-            df[38]     = 0.751953125-0.517578125
-            f[0] = 0.009765625 * 3
-            for i in range(1,39):
-                #
-                f[i] = f[i-1] + df[i]/2 + df[i-1]/2
-                #
-            #            
-            data['spec'].interpFreq(f)
+            if not np.any( np.isnan( data['spec'].E ) ):
+                self.fullMessage = True
+            else:
+                self.fullMessage = False
+                
             self.spec = data['spec']
             #
         #endif
@@ -133,7 +125,10 @@ class spotres:
 class tSpotterlist:
     #
     #
-    def __init__ ( self , spotterIDs, fake=None,fakeinterval=60,endpoint=None,fakeData=None,lat=None,lon=None,token=None,isaliveTime=7200 ):
+    def __init__ ( self , spotterIDs, fake=None,fakeinterval=60,endpoint=None,
+                   fakeData=None,lat=None,lon=None,token=None,
+                   isaliveTime=7200,matlabSpotter=False,targetTime=0,
+                   matlabSpotterDir=None):
         #
         # Create a spotter list from a set of spotterIDs. Note that
         # when an array of xy coordinates is provided to fake, the
@@ -151,6 +146,15 @@ class tSpotterlist:
         self.f = np.zeros(39)
         self.isaliveTime = isaliveTime
 
+        #
+        #Are these Spotters 'matlab spotters'; i.e. spectra created from sdcard
+        #(Innershelf assimilation)
+        self.matlabSpotter=matlabSpotter #Switch to toggle to matlabspotter
+        self.targetTime=targetTime       #the targetTime to get data
+        if matlabSpotterDir is None:
+            matlabSpotterDir='/Users/pieterbartsmit/Google Drive/Workingmanuscripts/innershelf/dataProcessing/filtered/2share'
+        self.matlabSpotterDir = matlabSpotterDir
+        
         if token is not None:
             #
             self.token = token
@@ -568,6 +572,9 @@ class tSpotterlist:
         import urllib.request
         import json
         import ndbc
+        import numpy as np
+        import h5py
+        import spectral
 
         #If this is a fake, or virtual spotter, do update from fake
         if self.fake:
@@ -581,6 +588,36 @@ class tSpotterlist:
             spec,lat,lon,epochtime = ndbc.getLatestSpec(stationID=ndbcID)
             data = {'spec':spec,'lat':lat,'lon':lon,'epochtime':epochtime,'name':spotterID,'spotterId':spotterID}
             spot = spotres( data )
+            #
+        elif self.matlabSpotter:
+            #
+            # This is a matlab spotter, read from dir
+            #
+            fileName = self.matlabSpotterDir + '/' + spotterID + '.mat'
+
+            dataFile = h5py.File( fileName , 'r' )
+
+            time = np.array(dataFile.get('time'))[0,:]
+
+            #Convert from matlab to Unix epoch, 719529 is the number of days
+            #at 1/1/1970 according to matlab datenum( 1970 , 1 , 1)
+            time = (time - 719529) * 3600. * 24
+
+            #Find minimum index in arrays
+            minimumIndex = np.argmin( np.abs( self.targetTime - time ) )
+            epochtime = time[minimumIndex]
+            #
+            E = np.array(dataFile.get('E'))[:,minimumIndex]
+            f = np.array(dataFile.get('f'))
+            a1 = np.array(dataFile.get('a1'))[:,minimumIndex]
+            b1 = np.array(dataFile.get('b1'))[:,minimumIndex]
+            a2 = np.array(dataFile.get('a2'))[:,minimumIndex]
+            b2 = np.array(dataFile.get('b2'))[:,minimumIndex]
+            lat = dataFile.get('latitude')[0][0]
+            lon = dataFile.get('longitude')[0][0]
+            spec = spectral.spectrum1d({'f':f,'E':E,'a1':a1,'b1':b1,'a2':a2,'b2':b2} )
+            data = {'spec':spec,'lat':lat,'lon':lon,'epochtime':epochtime,'name':spotterID,'spotterId':spotterID}
+            spot = spotres( data )            
             #
         else:
             #
