@@ -162,7 +162,7 @@ class tSpotterlist:
                 #
             else:
                 #
-                appdir = '/mnt/2ndHDD/models/innershelf/obs/'
+                matlabSpotterDir = '/mnt/2ndHDD/models/innershelf/obs/'
                 #            
             
         self.matlabSpotterDir = matlabSpotterDir
