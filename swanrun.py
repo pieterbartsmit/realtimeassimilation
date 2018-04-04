@@ -131,7 +131,7 @@ class swanrun:
         print('- Initialize model: ' + name)
 
         self.dataAssimilation = dataAssimilation
-
+        self.regval = 1.
         if bounlist == None:
             bounlist = []
 
@@ -511,7 +511,7 @@ class swanrun:
                 dirspec=asim.optimize(
                     spec , activeSpotterList = self.spotters.fullSpecIndices,
                     removeSingularValues=.9,
-                    method=['norm'],regval=(1.,1.,1.,1.)
+                    method=['norm'],regval=(self.regval,1.,1.,1.)
                     )
                 #
             #endif
