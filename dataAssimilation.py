@@ -5,7 +5,7 @@ class assimilation:
     # The assimilation object that performs the data assimilation...
     #
     def __init__( self , raytracerobject , xp , yp,
-                      momentsPerSpotter = 5,kind='energy' ):
+                      momentsPerSpotter = 5,kind='energy',limitingAngles=None ):
         #
         # INPUT:
         #
@@ -48,6 +48,7 @@ class assimilation:
         self.nsub = raytracerobject.nsub
         self.svd = None
         self.max_iter = 400 #maximum number of iterations of solvers
+        self.limitingAngles = limitingAngles
         
         #
         #
@@ -84,6 +85,21 @@ class assimilation:
 
         # We start under the assumption that all angles are inward angles
         self.inwardAngles = np.array(  [ True for x in range(0,self.nang) ]  )
+
+        if self.limitingAngles is not None:
+            #
+            for iang,val in enumerate( self.inwardAngles):
+                #
+                if self.ang[iang] < self.limitingAngles[0]:
+                    #
+                    self.inwardAngles[iang] = False
+                    #
+                if self.ang[iang] > self.limitingAngles[1]:
+                    #
+                    self.inwardAngles[iang] = False
+                    #
+                #
+
         
         #
         # create the (inverse) moment matrices for each point
@@ -119,6 +135,9 @@ class assimilation:
         inv = scipy.linalg.pinv( matrix )
         self.inwardAngles[  np.diag(np.matmul(  inv , matrix )) < 0.1 ] = False
 
+
+
+        
         maxconfidence = np.sum( self.inwardAngles ) / self.nang
         
         matrix = matrix[ : , self.inwardAngles ]

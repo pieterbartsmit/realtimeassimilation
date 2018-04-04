@@ -132,6 +132,8 @@ class swanrun:
 
         self.dataAssimilation = dataAssimilation
         self.regval = 1.
+        self.asimLimitingAngles = None
+        
         if bounlist == None:
             bounlist = []
 
@@ -465,7 +467,8 @@ class swanrun:
             # Create assimilation object
             #
             x,y = self.spotters.getLoc()
-            asim = dataAssimilation.assimilation( self.raytracer , x, y)
+            asim = dataAssimilation.assimilation( self.raytracer , x, y,
+                            limitingAngles=self.asimLimitingAngles)
             #
             # Do the data assimilation - and make sure the spectrum is in /deg/Hz
             #
