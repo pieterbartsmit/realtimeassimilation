@@ -48,27 +48,57 @@ def getLatestDirectionalSpectrumFromServer( date='',buoynum=0  ):
     # 4) return frequency/direction spectrum
     #
 
-    def getUrl( day ):
+    def getUrl( epoch ):
         #
         import calendar
+        import time
+
+        timeStruc = time.gmtime( epoch )
+        yy  = timeStruc.tm_year
+        mm  = timeStruc.tm_mon
+        dd  = timeStruc.tm_mday
+        hh  = timeStruc.tm_hour
+        min = timeStruc.tm_min
+        sec = timeStruc.tm_sec
+
+        time.strftime("%Y%m%d")
         
-        yy = day[0:4]
-        mm = day[4:6]
-        dd = day[6:8]        
-        epoch = calendar.timegm( (int(yy),int(mm),int(dd),0,0,0) )
         epochnow = calendar.timegm( time.gmtime() )
         #https://data.nodc.noaa.gov/ncep/nww3/2017/09/points/multi_1_base.buoys_spec.201709/multi_1.46011.SPEC.201709
         #https://data.nodc.noaa.gov/ncep/nww3/2017/09/points/multi_1_base.buoys_spec.201709/multi_1.46011.spec201709
         if ( epoch - epochnow > -3600*24*3 ):
+            day = time.strftime("%Y%m%d" , time.gmtime( epoch ) )
             url = 'http://nomads.ncep.noaa.gov/pub/data/nccf/com/wave/prod/multi_1.' \
               + day + '/bulls.t00z/multi_1.' + buoynum + '.spec'
+            realtime = True
         else:
+            #
+            # If requested epoch is the first spectrum of the month, we need to retrieve
+            # the previous months data, as it is stored there by wavewatch for some ^%&$%^$ reason
+            #
+
+            if ( dd==1 ) and (hh==0 or hh==1):
+                #
+                print( 'doin it')
+                mm = mm - 1
+                if mm < 1:
+                    #
+                    mm = 12
+                #
+
+            yy = str( yy )
+            if mm < 10:
+                mm = '0'+str(mm)
+            else:
+                mm = str(mm)
+                
             url = 'https://data.nodc.noaa.gov/ncep/nww3/' + yy +'/' + mm + \
                 '/points/multi_1_base.buoys_spec.' + yy + mm + '/' +           \
                 'multi_1.' + buoynum + '.SPEC.' + yy + mm
-            print(url)
+            realtime = False
         #
-        return( url )
+        return( url, realtime )
+    #ENDFUNCTIONDEF
     
     #---------------------------------------------------------------------------
     # 1) sanity check
@@ -76,15 +106,17 @@ def getLatestDirectionalSpectrumFromServer( date='',buoynum=0  ):
     if date=='':
         #
         day  = 3600 * 24
-        date =  [ time.strftime("%Y%m%d" , time.gmtime(  ) ), \
-                  time.strftime("%Y%m%d" , time.gmtime( calendar.timegm( time.gmtime() ) -   day) )  , \
-                  time.strftime("%Y%m%d" , time.gmtime( calendar.timegm( time.gmtime() ) -  2* day)) ]
+        date = [ calendar.timegm( time.gmtime() ),
+                 calendar.timegm( time.gmtime() ) -   day ,
+                 calendar.timegm( time.gmtime() ) - 2*day ]
         #
     else:
         #
         if type(date) != list:
             #
-            date = [time.strftime("%Y%m%d" , time.gmtime(date) ) ]
+            # 
+            #
+            date = [ date ]
             #
         #
 
@@ -113,7 +145,7 @@ def getLatestDirectionalSpectrumFromServer( date='',buoynum=0  ):
     for day in date:
         #url = 'http://nomads.ncep.noaa.gov/pub/data/nccf/com/wave/prod/multi_1.' \
         #    + day + '/bulls.t00z/multi_1.' + buoynum + '.spec'
-        url = getUrl( day )
+        url, realtime = getUrl( day )
         try:
             #
             # Check if the file exists on server
@@ -204,8 +236,19 @@ def getLatestDirectionalSpectrumFromServer( date='',buoynum=0  ):
     ang = ang * 180./np.pi
     E   = E * np.pi/180.
 
+
+
+    if not realtime:
+        #
+        # First spectrum returned is full of zeros for some reason (stored in previous months data)
+        # This potentially screws up interpolation. Here we set the first entry the same as
+        # the second to ensure nearest neighbour interpolation
+        E[0,:,:] = E[1,:,:]
+
     spec = spectral.spectrum( {'E':E , 'f':freq , 'ang':ang, 'loc':times } )
     spec.regularize(36)
+        
+        
     #plt.pcolor(dir,freq,dat)
     #plt.pcolor(dat)
     #plt.show
