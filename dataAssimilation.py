@@ -202,6 +202,9 @@ class assimilation:
         #endif
         
         self.numSpotActive = len(activeSpotterList)
+
+        print( 'using ' + str(len(activeSpotterList)) + 'in the assimilation' )
+        
         E = np.zeros( (self.nf , self.nang) )
         self.confidenceCurve = np.zeros( (self.nf , self.nang) )
         self.uniqueness = np.zeros( (self.nf , self.numSpotActive , self.numSpotActive) )        
