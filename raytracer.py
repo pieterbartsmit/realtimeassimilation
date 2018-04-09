@@ -102,7 +102,7 @@ class raytracer:
         self.lib.setcont( ctypes.byref(ctypes.c_double( dcont ) ) )
         self.radangles = radangles
         self.angfreq   = angfreq
-        self.nsub = 20
+        self.nsub = 20 #This seems to be unused - no time to check, but be aware!
     #end __init__
 
     def getmatrix( self , xp , yp , radangles,nsub, angfreq ):

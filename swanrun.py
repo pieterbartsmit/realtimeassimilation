@@ -770,27 +770,27 @@ class swanrun:
                     #                   
                     #write spectra
                     filename = self.dirs['outputpointsspec'] \
-                      + '/spec_' + pointid + '_' + self.name + '.spc'
+                      + '/spec_' + pointid + '_' + self.name + '.sim'
                     utils.writePoints(  self.simulationtime , filename , E[index,:] , header , '{}' )
 
                     #write directional moments (a1)
                     filename = self.dirs['outputpointsspec'] \
-                      + '/a1_' + pointid + '_' + self.name + '.spc'
+                      + '/a1_' + pointid + '_' + self.name + '.sim'
                     utils.writePoints(  self.simulationtime , filename , a1[index,:] , header , '{}' )
                     
                     #write directional moments (b1)                    
                     filename = self.dirs['outputpointsspec'] \
-                      + '/b1_' + pointid + '_' + self.name + '.spc'
+                      + '/b1_' + pointid + '_' + self.name + '.sim'
                     utils.writePoints(  self.simulationtime , filename , b1[index,:] , header , '{}' )
                     
                     #write directional moments (a2)
                     filename = self.dirs['outputpointsspec'] \
-                      + '/a2_' + pointid + '_' + self.name + '.spc'
+                      + '/a2_' + pointid + '_' + self.name + '.sim'
                     utils.writePoints(  self.simulationtime , filename , a2[index,:] , header , '{}' )
 
                     #write directional moments (b2)                    
                     filename = self.dirs['outputpointsspec'] \
-                      + '/b2_' + pointid + '_' + self.name + '.spc'
+                      + '/b2_' + pointid + '_' + self.name + '.sim'
                     utils.writePoints(  self.simulationtime , filename , b2[index,:] , header , '{}' )
                     #
                 #
@@ -956,6 +956,43 @@ class swanrun:
             filename = self.dirs['outputpointsbulk'] \
                 + '/' + 'Dir' + '.ray'
             utils.writePoints(  self.simulationtime , filename , self.pred.bulkDir().tolist() ,ids , '{}' )
+
+
+            E = self.pred.Ef().E
+            [a1,b1,a2,b2] = self.pred.directionalMoments()
+            header = [ str(f) for f in self.pred.f]
+            #
+            # Write output spectral quantities
+            #
+            #                    
+            for index,pointid in enumerate(ids):
+                #
+                #                   
+                #write spectra
+                filename = self.dirs['outputpointsspec'] \
+                  + '/spec_' + pointid + '_' + self.name + '.ray'
+                utils.writePoints(  self.simulationtime , filename , E[index,:] , header , '{}' )
+
+                #write directional moments (a1)
+                filename = self.dirs['outputpointsspec'] \
+                  + '/a1_' + pointid + '_' + self.name + '.ray'
+                utils.writePoints(  self.simulationtime , filename , a1[index,:] , header , '{}' )
+                    
+                #write directional moments (b1)                    
+                filename = self.dirs['outputpointsspec'] \
+                  + '/b1_' + pointid + '_' + self.name + '.ray'
+                utils.writePoints(  self.simulationtime , filename , b1[index,:] , header , '{}' )
+                    
+                #write directional moments (a2)
+                filename = self.dirs['outputpointsspec'] \
+                  + '/a2_' + pointid + '_' + self.name + '.ray'
+                utils.writePoints(  self.simulationtime , filename , a2[index,:] , header , '{}' )
+
+                #write directional moments (b2)                    
+                filename = self.dirs['outputpointsspec'] \
+                  + '/b2_' + pointid + '_' + self.name + '.ray'
+                utils.writePoints(  self.simulationtime , filename , b2[index,:] , header , '{}' )
+                #            
             #
         #endif
         #

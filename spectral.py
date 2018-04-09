@@ -640,7 +640,13 @@ class spectrum1d(tSpectrum):
         a1 = numpy.sum( self.E * self.a1 * df , axis=-1 ) /m
         b1 = numpy.sum( self.E * self.b1 * df , axis=-1 ) /m
         
-        return(numpy.arctan2( b1,a1) )
+
+        dir = numpy.arctan2( b1 , a1 )
+        if len(dir) == 1:
+            #
+            dir = dir[0]
+            #
+        return(dir)
 
     def bulkSprd(self):
         #
@@ -651,14 +657,22 @@ class spectrum1d(tSpectrum):
         df = deltaf(self.f)
         df = numpy.tile( df , [self.nloc,1] )
 
-        m  = self.m()
+        m = self.m()
         E = self.correctDim()
 
 
         a1 = numpy.sum( self.E * self.a1 * df , axis=-1 ) /m
         b1 = numpy.sum( self.E * self.b1 * df , axis=-1 ) /m
 
-        return(   numpy.sqrt(  2*( 1-numpy.sqrt(a1**2+b1**2) )  )   )
+        dspr = numpy.sqrt(  2*( 1-numpy.sqrt(a1**2+b1**2) )  )
+        #
+        if len(dspr) == 1:
+            #
+            dspr = dspr[0]
+            #
+        return( dspr )
+        
+#        return(   numpy.sqrt(  2*( 1-numpy.sqrt(a1**2+b1**2) )  )   )
 
     def dirSprd(self):
         #
@@ -671,8 +685,10 @@ class spectrum1d(tSpectrum):
         a1 = self.a1
         b1 = self.b1
 
-        
-        return(   numpy.sqrt(  2*( 1-numpy.sqrt(a1**2+b1**2) )  )   )
+        dspr = numpy.sqrt(  2*( 1-numpy.sqrt(a1**2+b1**2) )  ) 
+        if len(dspr) == 1:
+            dspr = dspr[0]         
+        return( dspr )
 
     def meanDir(self):
         #
@@ -685,8 +701,10 @@ class spectrum1d(tSpectrum):
         a1 = self.a1
         b1 = self.b1
 
-        
-        return(   numpy.arctan2( b1 , a1 )   )      
+        dir = numpy.arctan2( b1 , a1 )
+        if len(dir) == 1:
+            dir = dir[0]
+        return( dir )      
 
     
     def plot(self  , iloc=0, fig=None):

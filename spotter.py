@@ -710,4 +710,53 @@ class tSpotterlist:
         #
     #enddef
     #
+
+    def appendSpec( self,directory,name ):
+        #
+        import utils
+        import numpy as np
+        #
+        spec = self.getSpec()
+        a1 = spec.a1
+        b1 = spec.b1
+        b2 = spec.b2
+        a2 = spec.a2
+        E  = spec.E
+        
+        header = [ str(f) for f in spec.f]
+        ids = self.getIds(  )
+        #
+        # Write output spectral quantities
+        #
+        #
+        print('hadfadasd')
+        for index,pointid in enumerate(ids):
+           #
+           #                   
+           #write spectra
+           filename = directory \
+               + '/spec_' + pointid + '_' + name + '.obs'
+           utils.writePoints(  self.meanTime , filename , E[index,:] , header , '{}' )
+
+           #write directional moments (a1)
+           filename = directory \
+               + '/a1_' + pointid + '_' + name + '.obs'
+           utils.writePoints(  self.meanTime , filename , a1[index,:] , header , '{}' )
+                    
+           #write directional moments (b1)                    
+           filename = directory \
+               + '/b1_' + pointid + '_' +name + '.obs'
+           utils.writePoints(  self.meanTime , filename , b1[index,:] , header , '{}' )
+                    
+           #write directional moments (a2)
+           filename = directory \
+               + '/a2_' + pointid + '_' + name + '.obs'
+           utils.writePoints(  self.meanTime , filename , a2[index,:] , header , '{}' )
+
+           #write directional moments (b2)                    
+           filename = directory \
+               + '/b2_' + pointid + '_' + name + '.obs'
+           utils.writePoints(  self.meanTime , filename , b2[index,:] , header , '{}' )
+        #
+    #
 #end class
