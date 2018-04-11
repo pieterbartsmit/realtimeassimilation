@@ -351,6 +351,7 @@ contains
     !  
     do iRay  = 1 , nRay
        !
+       outpar( : , iray )  = 0.
        call interpDep([inpar(1,iray)],[inpar(2,iray)],tmp(1),1)
        tmpK = disperK( inpar(4,iray), tmp(1) )
 
@@ -412,7 +413,10 @@ contains
              ! Adaptive Runge Kutta as described in numerical recipes
              !
              !
-             ds  = direction * min(dx_bat* Rearth*cos(lat0*pi/180.),dy_bat * Rearth) * num_stepsize_fracBatGrid
+             !The bottom gradients are in degrees, switch to radians
+             !implies the additional Jacobian Factor pi/180
+             ds  = direction * min(pi/180*dx_bat* Rearth*cos(lat0*pi/180.), &
+                  pi/180*dy_bat * Rearth) * num_stepsize_fracBatGrid
              !
              
              ACCURACYLOOP: do jstep = 1 , 10

@@ -182,7 +182,16 @@ subroutine difvglspherical( out, in , freq , ds , dry )
     k  = disperK( w , di )
     c = freq / k 
     dcdx = 0.
-    dhdx = 0.    
+    dhdx = 0.
+
+    !The bottom gradients are in degrees, switch to radians
+    !implies the additional Jacobian Factor pi/180
+    if (spherical) then
+       !
+       dstep = dstep * pi/180
+       !
+    endif
+    
     if ( di(2) >= drylim .and. di(3) >= drylim) then
        !
        dcdx  = (c(2) - c(3)) / 2. / dstep
@@ -251,8 +260,8 @@ subroutine difvglspherical( out, in , freq , ds , dry )
        lon = Lon0 + in(1)
        lat = Lat0 + in(2)       
        
-       out(1) = cth / Rearth / cos( lat *pi/180. )
-       out(2) = sth / Rearth
+       out(1) = 180/pi * cth / Rearth / cos( lat *pi/180. ) 
+       out(2) = 180/pi * sth / Rearth
 
 
        !write( msg , '("angles ", f15.8, f15.8, f7.3, f7.3, f7.3  )' ) Rearth ,lat ,cth,sth,cos(lat)     
