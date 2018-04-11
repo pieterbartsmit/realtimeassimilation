@@ -14,7 +14,7 @@ class raytracer:
         #
         if platform.system() == 'Darwin':
             #
-            libloc = '/users/pieterbartsmit/Google Drive/work/dataAsim/fortran/raytracing.lib'
+            libloc = '/users/pieterbartsmit/Google Drive/repos/DAI/fortran/raytracing.lib'
             #
         else:
             #

@@ -178,7 +178,7 @@ contains
     end if
     !
     !
-    !$OMP PARALLEL PRIVATE( isec,isubray,inpar,out,outpar,ccg,iang,fac,jang  )
+    !$OMP PARALLEL PRIVATE( isec,isubray,inpar,out,outpar,ccg,iang,fac,jang,dang  )
     !
     !
     !$OMP DO
@@ -189,11 +189,6 @@ contains
           !
           inpar = [ xpl , ypl , angles(isec) - dang/2. + (isubray-1.)*dang/maxrays , freq ]
           call tracing( outpar(1), out(1),inpar(1),1,1,1,-1._rKind)
-
-          !write( msg , '("Point ", f10.5  )' )  outpar(1)
-
-
-          
           !
           ! Reason of termination (Rot) == 10 + [ 1..4 ] if terminating on
           ! W=1,E=2,S=3,N=4 boundaries
@@ -244,47 +239,11 @@ contains
                    endif
                    !
                 endif
-                   !
                 !
              enddo searchloop
-             !iang(1) = floor( (outpar(3) - angles(1) ) / dang ) + 1
-             !iang(2) = iang(1) + 1
 
-             !if (iang(1) <= 0) then
-                !
-             !   iang(1) = nang + iang(1)
-                !
-             !endif
-
-             !if (iang(2) > nang) then
-                !
-             !   iang(2) = iang(2) - nang
-                !
-             !endif             
-             
-             !if (iang(1) == iang(2) ) then
-                !
-             !   fac(1) = 1.
-             !   fac(2) = 0.
-             !   matrix( iang(1) , isec ) = matrix( iang(1) , isec ) + ccg/ maxrays ! 
-                !
-             !else
-                !
-             !   angdif = cos( outpar(3) )*cos(angles(iang(1)) ) &
-             !          + sin( outpar(3) )*sin(angles(iang(1)) )
-             !   angdif = acos( angdif )
-                
-                !fac(1) = (  angdif )/dang
-
-             !   angdif = cos( outpar(3) )*cos(angles(iang(2)) ) &
-             !          + sin( outpar(3) )*sin(angles(iang(2)) )
-             !   angdif = acos( angdif )                
-
-
-                matrix( iang(2) , isec ) = matrix( iang(2) , isec ) + ccg * fac(2)/ maxrays
-                matrix( iang(1) , isec ) = matrix( iang(1) , isec ) + ccg * fac(1)/ maxrays
-                !
-             !endif
+             matrix( iang(2) , isec ) = matrix( iang(2) , isec ) + ccg * fac(2)/ maxrays
+             matrix( iang(1) , isec ) = matrix( iang(1) , isec ) + ccg * fac(1)/ maxrays
              !
           else
              !
@@ -490,7 +449,7 @@ contains
 
                 if (dry(1)  .or. dry(2) .or. dry(3)  ) then
                    !
-                   ds = ds / 4.
+                   ds = ds / 2.
                    cycle accuracyloop
                    !
                 endif
@@ -500,10 +459,12 @@ contains
                 
                 !
                 ! If the prescribed accuracy hit...                !
-                if ( dsol(1)**2 <= acc(1)**2 .and. &
-                     dsol(2)**2 <= acc(2)**2 .and. &
-                     dsol(3)**2 <= acc(3)**2 .and. &
-                     dsol(4)**2 <= acc(4)**2 )then
+                !
+                ! The accuracy checks for (1) if the difference between solutions
+                ! is smaller then 0.1 degree, and (2) that the ray did not turn more than
+                ! 5 degrees over a step.
+                if ( dsol(3)**2 <= acc(3)**2 .and. &
+                     dsol(4)**2 <= acc(4)**2 ) then
                    !
                    ! then see if we can enlarge step?
                    !
@@ -515,7 +476,7 @@ contains
                    !
                 else
                    !
-                   ds = ds / 8.
+                   ds = ds / 2.
                    !
                 endif
                 !
@@ -523,7 +484,7 @@ contains
              !
              ! And do free Richardson's extrapolation
              !
-             vecout( : , iRay ) = vecout( : , iRay ) + dsol(1:3)/15.
+             !vecout( : , iRay ) = vecout( : , iRay ) + dsol(1:3)/15.
              !
           endif
           
