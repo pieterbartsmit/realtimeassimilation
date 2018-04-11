@@ -936,7 +936,7 @@ class swanrun:
             spec = copy.deepcopy( self.bounlist[0].spec )
             spec.tof()
             spec.interpFreq( self.spotters.f )
-            self.pred= self.raytracer.prediction( spec , xp , yp , 20  )
+            self.pred= self.raytracer.prediction( spec , xp , yp , 100  )
             
             #
             # PROCESS OUTPUT
