@@ -21,7 +21,7 @@ module modPar
   real(kind=rKind)                :: num_dist_ratio = 1.05
   
   real(kind=rKind)                :: num_stepsize_maxdegPerStep  = 0.5    !Fraction of wavelengthnum_stepsize_fracBatGrid
-  real(kind=rKind)                :: num_stepsize_fracBatGrid = 1
+  real(kind=rKind)                :: num_stepsize_fracBatGrid = 1.
   real(kind=rKind)                :: num_stepsize_fracK = 0.001
   real(kind=rKind)                :: num_stepsize_accuracy = 0.001
 

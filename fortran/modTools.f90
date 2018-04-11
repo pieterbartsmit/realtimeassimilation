@@ -79,7 +79,7 @@ contains
        else
           !
           dif = ( Yi(ip) - Y(1) )/dy
-          iy(1) = nint( dif  ) + 1
+          iy(1) = floor( dif  ) + 1
           iy(2) =  iy(1)+1             
          ! searchloop: do is = 1,my-1
              !
@@ -110,41 +110,11 @@ contains
        else
           !
           dif = ( Xi(ip) - X(1) )/dx 
-          ix(1) = nint( dif ) + 1
+          ix(1) = floor( dif ) + 1
           ix(2) = ix(1)+1          
-          !searchloop2: do is =1,mx-1
-             !
-             !
-             !if (Xi(ip) >= X(is) .and. Xi(ip) < X(is+1)  ) then
-                !
-                !ix(1) = is
-                !ix(2) = is+1
-                !exit searchloop2
-                !
-             !endif
-             !
-             !
-          !enddo searchloop2
-          !call binsearch( X , mx,xi(ip) , iix )
-
-          !if ( ix(1) - iix(1) > 5) then
-          !   write( msg , '(i04,i04  )' ) ix(1),iix(1)
-          !   call wlog( msg , 0 )             
-          !endif
           !
        end if
-
-       
-       !iy(1) = floor(( Yi(ip) - Y(1) )/dy) + 1       
-       !iy(2) =  iy(1)+1
-       !ix(1) = floor(( Xi(ip) - X(1) )/dx) + 1
-       !ix(2) = ix(1)+1
-       !
-
-       !iy(1) = max(1,min(iy(1),my))
-       !iy(2) = max(1,min(iy(2),my))
-       !ix(1) = max(1,min(ix(1),mx))
-       !ix(2) = max(1,min(ix(2),mx))    
+ 
        !
 
        if (  iy(2) > iy(1) ) then
@@ -171,9 +141,9 @@ contains
        !bi-linear interpolation from surrounding values
        
        Zi(ip) = dep(ix(1),iy(1))*(1.-dyb)*(1.-dxb) + &
-            dep(ix(2),iy(1))*(1.-dyb)*(   dxb) + &
-            dep(ix(2),iy(2))*(   dyb)*(   dxb) + &
-            dep(ix(1),iy(2))*(   dyb)*(1.-dxb)   
+                dep(ix(2),iy(1))*(1.-dyb)*(   dxb) + &
+                dep(ix(2),iy(2))*(   dyb)*(   dxb) + &
+                dep(ix(1),iy(2))*(   dyb)*(1.-dxb)   
 
         !
     enddo
@@ -226,146 +196,7 @@ contains
   end subroutine binsearch
   
   
-  subroutine gridInterp2(X,Y,mx,my,Z,Xi,Yi,Zi,mxi,myi)
-! 
-!*****************************************************************************
-!
-!
 
-!-----------------------------------------------------------------------------
-!                                   INTERFACE
-!-----------------------------------------------------------------------------
-
-!   --------- DESCRIPTION  --------
-
-!   Function which finds the bi-linear interpolation Zi at Xi,Yi from the function Z defined at X,Y.
-!   Note that both grids (X,Y and Xi,Yi) must be defined in the same coordinate system. For values outside the input
-!   grid the closest defined values are taken (Nearest interpolation).
-!   
-
-!   --------- DEPENDENCIES --------
-    use modPar, only: rkind,ikind 
-    
-    implicit none
-
-!   --------- VARIABLES --------
-!
-!   ARGUMENT     
-    real(kind=rKind),intent(in) ,dimension(mx)      :: X        ! X - coordinate(s) grid (1D)
-    real(kind=rKind),intent(in) ,dimension(my)      :: Y        ! Y - coordinate(s) grid (1D)
-    real(kind=rKind),intent(in) ,dimension(mx,my)   :: Z        ! Function values at (X,Y)
-    real(kind=rKind),intent(in) ,dimension(mxi,myi) :: Xi       ! x - coordinate to interpolate Z
-    real(kind=rKind),intent(in) ,dimension(mxi,myi) :: Yi       ! y - coordinate to interpolate Z
-    real(kind=rKind),intent(out),dimension(mxi,myi) :: Zi       ! Interpolated values at (Xi,Yi)
-    
-    integer(kind=iKind),intent(in)                  :: mx       ! Number of points in x-dir
-    integer(kind=iKind),intent(in)                  :: my       ! Number of points in y-dir
-    integer(kind=iKind),intent(in)                  :: mxi      ! Number of points in interpolated grid
-    integer(kind=iKind),intent(in)                  :: myi      ! Number of points in interpolated grid
-        
-!   LOCAL
-    integer(kind=iKind)                             :: is
-    integer(kind=iKind)                             :: ixi      ! loop index
-    integer(kind=iKind)                             :: iyi      ! loop index.
-    integer(kind=iKind)                             :: ixf      ! loop index
-    integer(kind=iKind)                             :: iyf      ! loop index    
-    integer(kind=iKind),dimension(2)                :: ix       ! index of points surrounding Xi(ixi)
-    integer(kind=iKind),dimension(2)                :: iy       ! index of points surrounding Yi(iyi)
-    real(kind=rKind)                                :: rdx      ! 1/dx
-    real(kind=rKind)                                :: rdy      ! 1/dy
-    real(kind=rKind)                                :: dx       ! meshsize input grid
-    real(kind=rKind)                                :: dy       ! meshsize input grid
-    real(kind=rKind)                                :: dxb      ! relative distance
-    real(kind=rKind)                                :: dyb      ! relative distance
-    real(kind=rKind)                                :: fac
-    
-    integer(kind=iKind),allocatable                             :: ixref(:)
-    integer(kind=iKind),allocatable                             :: iyref(:)
-    
-!    
-!-----------------------------------------------------------------------------
-!                                   SOURCE
-!-----------------------------------------------------------------------------
-!
-! Interpolation by searching, appears to give better results than gridinterp, but why? Roundoff?
-!
-    allocate(ixref(mxi))
-    allocate(iyref(myi))
-    !
-    ix(1) = 1
-    iyi = 1
-
-    dx = X(2) - X(1)
-    dy = Y(2) - Y(1)    
-    do ixi=1,mxi
-        !
-        ixref(ixi) =  floor(( Xi(ixi,1) - X(1) )/dx) + 1
-        !
-    enddo
-    
-    iy(1) = 1
-    ixi = 1
-    do iyi=1,myi
-        !
-        iyref(iyi) =  floor(( Yi(1,iyi) - Y(1) )/dy) + 1
-        !
-    enddo    
-
-
-    !
-    do iyi=1,myi
-        !
-        do ixi=1,mxi
-            !
-            ! Find interpolation values
-            !            
-            iy(1) = iyref(iyi)
-            iy(2) = iyref(iyi)+1
-            ix(1) = ixref(ixi)
-            ix(2) = ixref(ixi)+1
-            !
-            
-            iy(1) = max(1,min(iy(1),my))
-            iy(2) = max(1,min(iy(2),my))
-            ix(1) = max(1,min(ix(1),mx))
-            ix(2) = max(1,min(ix(2),mx))    
-            !
-            
-            dy =Y(iy(2))-Y(iy(1))
-            if (  dy > 0. ) then
-                !
-                rdy = 1./dy
-                dyb = ( Yi(ixi,iyi)-Y(iy(1)) ) * rdy
-                !
-            else    
-                dyb = 0.
-            endif
-            
-            dx =X(ix(2))-X(ix(1))
-            if (  dx > 0. ) then
-                !
-                rdx = 1./dx
-                dxb = ( Xi(ixi,iyi)-X(ix(1)) ) * rdx
-                !
-            else    
-                dxb = 0.
-            endif            
-
-            !
-            !bi-linear interpolation from surrounding values
-            
-            Zi(ixi,iyi) = Z(ix(1),iy(1))*(1.-dyb)*(1.-dxb) + &
-                          Z(ix(2),iy(1))*(1.-dyb)*(   dxb) + &
-                          Z(ix(2),iy(2))*(   dyb)*(   dxb) + &
-                          Z(ix(1),iy(2))*(   dyb)*(1.-dxb)   
-            !
-        enddo
-        !
-    enddo
-    deallocate(ixref)
-    deallocate(iyref)
-!
-  end subroutine gridInterp2
 
 
   function inBndlist( iBnd )
@@ -533,6 +364,8 @@ contains
   end subroutine matinv
 
   elemental function disperK( omega , dep )
+    !
+    ! Checked this algorithm on tue april 10, 2018
     !
     real(kind=rKind) :: disperK
     real(kind=rKind),intent(in) :: omega
