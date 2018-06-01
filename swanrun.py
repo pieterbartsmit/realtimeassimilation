@@ -545,7 +545,7 @@ class swanrun:
                 if self.source['dirspec'][0].lower() == 'ww3':
                     #
                     print('   - Downloading directional spectrum from NOAA ww3')
-                    dirspec = wavewatch3.getSpectrum(epochtime,self.source['dirspec'][1])
+                    dirspec = wavewatch3.getSpectrum(epochtime,self.source['dirspec'][1],workingdirectory)
                     #dirspec.constraint( -90 , 180)                    
                     #
                 else:

@@ -1,23 +1,60 @@
-    E   = E * np.pi/180.
+#
+# Python package to retrieve wavewatch files
+#
+import code
+import numpy as np
+import spectral
 
+def getSpectrum( epochtime , stationID , workdir='./' ):
+    #
+    import spectral
+    res = getLatestDirectionalSpectrumFromServer(date=epochtime,buoynum=stationID, workdir=workdir )
 
+    spec = res['spec'].interpLoc( epochtime )
+    
+    return( spec )
+    #
+    #
+    
+def getLatestDirectionalSpectrumFromServer( date='',buoynum=0, workdir='./'  ):
+    #
+    # Dependencies
+    #
+    import urllib.request
+    import time
+    import re
+    import calendar
+    #---------------------------------------------------------------------------    
+    #
+    # This routine grabs spectral buoy data from the NOAA nomads server. Input is a 
+    # date and a buoynum. Note that only the last few days are stored on the NOMAD
+    # server.
+    #
+    # In no date or buoy are given, it defaults to "today (in UTC!)" and buoy 46011 - which just
+    # happens to be the buoy for the ONR Innershelf experiment.
+    #
+    # PBS - July, 2017
+    #
+    # extended to grab from data.noda.noaa.gov/pub/data for historical dates
+    #
+    # PBS - Apr, 2018
+    #---------------------------------------------------------------------------
+    #
+    # Code description:
+    # 1) sanity checking of input
+    # 2) grab data from server
+    # 3) reformat data to usuable format
+    # 4) return frequency/direction spectrum
+    #
 
-    if not realtime:
+    def getUrl( epoch ):
         #
-        # First spectrum returned is full of zeros for some reason (stored in previous months data)
-        # This potentially screws up interpolation. Here we set the first entry the same as
-        # the second to ensure nearest neighbour interpolation
-        E[0,:,:] = E[1,:,:]
+        import calendar
+        import time
+        import os
 
-    spec = spectral.spectrum( {'E':E , 'f':freq , 'ang':ang, 'loc':times } )
-    spec.regularize(36)
-        
-        
-    #plt.pcolor(dir,freq,dat)
-    #plt.pcolor(dat)
-    #plt.show
-    #code.interact( local=locals() )
-    return ( {'spec':spec , 'exist':True, 'Hs':Hs, 'Dm':Dm } )        yy  = timeStruc.tm_year
+        timeStruc = time.gmtime( epoch )
+        yy  = timeStruc.tm_year
         mm  = timeStruc.tm_mon
         dd  = timeStruc.tm_mday
         hh  = timeStruc.tm_hour
@@ -25,10 +62,11 @@
         sec = timeStruc.tm_sec
 
         time.strftime("%Y%m%d")
-        
+        isFile = False
         epochnow = calendar.timegm( time.gmtime() )
         #https://data.nodc.noaa.gov/ncep/nww3/2017/09/points/multi_1_base.buoys_spec.201709/multi_1.46011.SPEC.201709
         #https://data.nodc.noaa.gov/ncep/nww3/2017/09/points/multi_1_base.buoys_spec.201709/multi_1.46011.spec201709
+        #ftp://polar.ncep.noaa.gov/pub/history/waves/multi_1/201710/points/multi_1_base.buoys_part.201710.tar.gz        
         if ( epoch - epochnow > -3600*24*3 ):
             day = time.strftime("%Y%m%d" , time.gmtime( epoch ) )
             url = 'http://nomads.ncep.noaa.gov/pub/data/nccf/com/wave/prod/multi_1.' \
@@ -54,13 +92,22 @@
                 mm = '0'+str(mm)
             else:
                 mm = str(mm)
-                
-            url = 'https://data.nodc.noaa.gov/ncep/nww3/' + yy +'/' + mm + \
-                '/points/multi_1_base.buoys_spec.' + yy + mm + '/' +           \
-                'multi_1.' + buoynum + '.SPEC.' + yy + mm
+
+            fileexists = os.path.isfile(workdir+'/'+buoynum+'.SPEC.'+yy + mm)
+
+            if  fileexists:
+                isFile = True
+                url = workdir+'/'+buoynum+'.SPEC.'+yy + mm
+            else:                
+                url = 'https://data.nodc.noaa.gov/ncep/nww3/' + yy +'/' + mm + \
+                  '/points/multi_1_base.buoys_spec.' + yy + mm + '/' +         \
+                  'multi_1.' + buoynum + '.SPEC.' + yy + mm
+
+            #url = 'ftp://polar.ncep.noaa.gov/pub/history/waves/multi_1/'+yy+mm+ \
+            #  '/points/multi_1_base.buoys_spec.' + yy + mm 201710.tar.gz
             realtime = False
         #
-        return( url, realtime )
+        return( url, realtime, isFile )
     #ENDFUNCTIONDEF
     
     #---------------------------------------------------------------------------
@@ -108,7 +155,14 @@
     for day in date:
         #url = 'http://nomads.ncep.noaa.gov/pub/data/nccf/com/wave/prod/multi_1.' \
         #    + day + '/bulls.t00z/multi_1.' + buoynum + '.spec'
-        url, realtime = getUrl( day )
+        url, realtime, isFile = getUrl( day )
+
+        if isFile:
+            response = open(url,'rt')
+            found = True
+            print('we are in business')
+            break
+        
         try:
             #
             # Check if the file exists on server
@@ -138,7 +192,8 @@
     #
     # Decode to ascii
     #
-    lines = lines.decode('utf-8')
+    if not isFile:
+        lines = lines.decode('utf-8')
     #
     # Remove newline characters
     #
