@@ -1,60 +1,23 @@
-#
-# Python package to retrieve wavewatch files
-#
-import code
-import numpy as np
-import spectral
+    E   = E * np.pi/180.
 
-def getSpectrum( epochtime , stationID ):
-    #
-    import spectral
-    res = getLatestDirectionalSpectrumFromServer(date=epochtime,buoynum=stationID)
 
-    spec = res['spec'].interpLoc( epochtime )
-    
-    return( spec )
-    #
-    #
-    
-def getLatestDirectionalSpectrumFromServer( date='',buoynum=0  ):
-    #
-    # Dependencies
-    #
-    import urllib.request
-    import time
-    import re
-    import calendar
-    import matplotlib.pyplot as plt
-    #---------------------------------------------------------------------------    
-    #
-    # This routine grabs spectral buoy data from the NOAA nomads server. Input is a 
-    # date and a buoynum. Note that only the last few days are stored on the NOMAD
-    # server.
-    #
-    # In no date or buoy are given, it defaults to "today (in UTC!)" and buoy 46011 - which just
-    # happens to be the buoy for the ONR Innershelf experiment.
-    #
-    # PBS - July, 2017
-    #
-    # extended to grab from data.noda.noaa.gov/pub/data for historical dates
-    #
-    # PBS - Apr, 2018
-    #---------------------------------------------------------------------------
-    #
-    # Code description:
-    # 1) sanity checking of input
-    # 2) grab data from server
-    # 3) reformat data to usuable format
-    # 4) return frequency/direction spectrum
-    #
 
-    def getUrl( epoch ):
+    if not realtime:
         #
-        import calendar
-        import time
+        # First spectrum returned is full of zeros for some reason (stored in previous months data)
+        # This potentially screws up interpolation. Here we set the first entry the same as
+        # the second to ensure nearest neighbour interpolation
+        E[0,:,:] = E[1,:,:]
 
-        timeStruc = time.gmtime( epoch )
-        yy  = timeStruc.tm_year
+    spec = spectral.spectrum( {'E':E , 'f':freq , 'ang':ang, 'loc':times } )
+    spec.regularize(36)
+        
+        
+    #plt.pcolor(dir,freq,dat)
+    #plt.pcolor(dat)
+    #plt.show
+    #code.interact( local=locals() )
+    return ( {'spec':spec , 'exist':True, 'Hs':Hs, 'Dm':Dm } )        yy  = timeStruc.tm_year
         mm  = timeStruc.tm_mon
         dd  = timeStruc.tm_mday
         hh  = timeStruc.tm_hour
