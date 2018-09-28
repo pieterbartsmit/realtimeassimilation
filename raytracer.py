@@ -18,7 +18,7 @@ class raytracer:
             #
         else:
             #
-            libloc = '/mnt/2ndHDD/assimilationModel/fortran/raytracing.lib';
+            libloc = '/mnt/2nd_HDD/assimilationModel/fortran/raytracing.lib';
             #        
         #endif
 
