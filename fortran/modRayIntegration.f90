@@ -252,8 +252,6 @@ subroutine difvglspherical( out, in , freq , ds , dry )
        dcdx = - freq / (k(1)**2) * dkdh * dhdx
        dcdy = - freq / (k(1)**2) * dkdh * dhdy
        !
-
-       
        cth = cos(in(3))
        sth = sin(in(3))
        !
@@ -262,11 +260,8 @@ subroutine difvglspherical( out, in , freq , ds , dry )
        
        out(1) = 180./pi * cth / Rearth / cos( lat *pi/180. ) 
        out(2) = 180./pi * sth / Rearth
-
-
        !write( msg , '("angles ", f15.8, f15.8, f7.3, f7.3, f7.3  )' ) Rearth ,lat ,cth,sth,cos(lat)     
        !call wlog( msg , 0 )
-
        out(3) = 1./c(1)/Rearth *  ( dcdx*sth/cos(lat*pi/180.) - dcdy*cth) - cth * tan(lat*pi/180)/Rearth
        !
     else
@@ -282,7 +277,7 @@ subroutine difvglspherical( out, in , freq , ds , dry )
        out(2) = sth
        out(3) = 1./c(1) *  ( dcdx*sth - dcdy*cth )       
        !
-    endif     
+    endif
     !
   end subroutine difvglspherical
   !

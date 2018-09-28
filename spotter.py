@@ -743,7 +743,7 @@ class tSpotterlist:
                + '/a1_' + pointid + '_' + name + '.obs'
            utils.writePoints(  self.meanTime , filename , a1[index,:] , header , '{}' )
                     
-           #write directional moments (b1)                    
+           #write directional moments (b1)
            filename = directory \
                + '/b1_' + pointid + '_' +name + '.obs'
            utils.writePoints(  self.meanTime , filename , b1[index,:] , header , '{}' )

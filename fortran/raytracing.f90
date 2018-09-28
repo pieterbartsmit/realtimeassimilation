@@ -150,8 +150,9 @@ contains
     real(    kind = rKind),intent(in)    :: xp
     real(    kind = rKind),intent(in)    :: yp
     real(    kind = rKind),intent(in)    :: freq
-    integer(    kind = iKind)               :: iang(2)    
+    integer(    kind = iKind)            :: iang(2)    
     real(    kind = rKind)               :: dang
+    real(    kind = rKind)               :: dang2    
     real(    kind = rKind)               :: fac(2)    
     real(    kind = rKind)               :: inpar(4)
     real(    kind = rKind)               :: out(3)
@@ -161,8 +162,12 @@ contains
     real(    kind = rKind)               :: angdif
     real(    kind = rKind)               :: xpl
     real(    kind = rKind)               :: ypl
+    real(    kind = rKind)               :: direction    
     logical                              :: tmp
     integer( kind = iKind )              :: jang
+    
+    integer( kind = iKind )              :: iDirection
+    logical                              :: found
     
     !
     dang = angles(2) - angles(1)
@@ -178,7 +183,7 @@ contains
     end if
     !
     !
-    !$OMP PARALLEL PRIVATE( isec,isubray,inpar,out,outpar,ccg,iang,fac,jang,dang  )
+    !$OMP PARALLEL PRIVATE( isec,isubray,inpar,out,outpar,ccg,iang,fac,jang,dang, iDirection,dang2,direction,found  )
     !
     !
     !$OMP DO
@@ -186,9 +191,19 @@ contains
     do isec = 1, nang
        !
        do isubray = 1, maxrays
+       do iDirection =  1,2          
           !
           inpar = [ xpl , ypl , angles(isec) - dang/2. + (isubray-1.)*dang/maxrays , freq ]
-          call tracing( outpar(1), out(1),inpar(1),1,1,1,-1._rKind)
+
+          if (iDirection == 1) then
+             !Backward phase
+             direction = -1._rKind         
+          else
+             !Forward phase
+             direction = 1._rKind
+
+          endif
+          call tracing( outpar(1), out(1),inpar(1),1,1,1,direction)          
           !
           ! Reason of termination (Rot) == 10 + [ 1..4 ] if terminating on
           ! W=1,E=2,S=3,N=4 boundaries
@@ -213,6 +228,7 @@ contains
                 !
              endif
 
+             found = .false.
              searchloop: do jang = 1, nang
                 !
                 if ( outpar(3) >= angles(jang) ) then
@@ -220,20 +236,21 @@ contains
                    if (jang==nang) then
                       iang(1) = nang
                       iang(2) = 1
-                      dang    = angles(1) + pi2 - angles(nang)
-                      fac(1) = 1. - ( outpar(3) - angles(nang)    )/dang
-                      fac(2) = 1. - ( angles(1) + pi2 - outpar(3) )/dang
-
+                      dang2    = angles(1) + pi2 - angles(nang)
+                      fac(1) = 1. - ( outpar(3) - angles(nang)    )/dang2
+                      fac(2) = 1. - ( angles(1) + pi2 - outpar(3) )/dang2
+                      found = .true.
                       exit searchloop
                    endif
 
                    if (outpar(3) < angles(jang+1)) then
                       !
-                      dang = angles(jang+1) - angles(jang)
+                      dang2 = angles(jang+1) - angles(jang)
                       iang(1) = jang
                       iang(2) = jang+1
-                      fac(1) = 1. - ( outpar(3     ) - angles(jang) )/dang
-                      fac(2) = 1. - ( angles(jang+1) - outpar(3)    )/dang
+                      fac(1) = 1. - ( outpar(3     ) - angles(jang) )/dang2
+                      fac(2) = 1. - ( angles(jang+1) - outpar(3)    )/dang2
+                      found = .true.
                       exit searchloop
                       !
                    endif
@@ -242,8 +259,19 @@ contains
                 !
              enddo searchloop
 
-             matrix( iang(2) , isec ) = matrix( iang(2) , isec ) + ccg * fac(2)/ maxrays
-             matrix( iang(1) , isec ) = matrix( iang(1) , isec ) + ccg * fac(1)/ maxrays
+             if ( found ) then
+                !
+                matrix( iang(2) , isec ) = matrix( iang(2) , isec ) + ccg * fac(2)/ maxrays
+                matrix( iang(1) , isec ) = matrix( iang(1) , isec ) + ccg * fac(1)/ maxrays
+                !
+             else
+                !
+                ! This branch should never be entered - it is though; not sure why yet
+                !
+                write( msg , '("Point ", f8.3, f8.3, f8.3  )' ) outpar(3) , angles(1)  , angles(2) 
+                call wlog( msg , 0 )     
+                !
+             endif
              !
           else
              !
@@ -251,6 +279,7 @@ contains
              !
           endif          
           !
+       enddo
        enddo
        !
     enddo
@@ -638,7 +667,6 @@ contains
        if ( ds < stepsize ) then
           !
           stepsize = ds
-
           !
        endif
        !

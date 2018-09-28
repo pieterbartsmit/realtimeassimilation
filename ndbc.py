@@ -137,23 +137,52 @@ def getHistorical( years ,  stationID='46011' , workingdirectory = None ):
     import spectral
     #
     start = True
+    direc = ['swden','swdir','swdir2','swr1','swr2']
+    name  = ['E','a1','b1','a2','b2']
+    sep   = ['w','d','i','j','k']
+    ikind  = [1,1,1,1,1]
+    data = {} 
+    #
     for year in years:
         #
-        url = 'http://www.ndbc.noaa.gov/data/historical/swden/' + stationID + \
-            'w' + '{:4d}'.format(year) + '.txt.gz'
-        E, f , date = getSpectralData( url , workingdirectory = None,kind=0,
+        for [index,d] in enumerate(direc):
+            url = 'http://www.ndbc.noaa.gov/data/historical/' + d + '/'+ stationID + \
+              sep[index] + '{:4d}'.format(year) + '.txt.gz'
+
+            tmp, f , date = getSpectralData( url , workingdirectory ,kind=ikind[index],
                                            historical=True )
-        if start:
-            start = False
-            spec = E
-            freq = f
-            dates = date
-        else:
-            spec = np.concatenate( (spec , E), axis=0 )
-            dates = np.concatenate( (dates , date), axis=0 )
+            if start:
+                data[d] = tmp
+                freq = f
+                dates = date
+            else:
+                data[d] = np.concatenate( (data[d] , tmp), axis=0 )
+                dates = np.concatenate( (dates , date), axis=0 )
+            #
         #
-    #
-    spec = spectral.spectrum1d( {'E':spec , 'f':freq, 'loc':dates } )      
+        start = False
+
+    angle1 = ( 270 -   data['swdir'] ) * np.pi / 180.
+    angle2 = ( 540 - 2*data['swdir2'] ) * np.pi / 180.
+
+    msk = data['swr1'] == 999.0
+    msk = data['swr2'] == 999.0
+
+    data['swr1'][msk] = 0.
+    data['swr2'][msk] = 0.
+
+    #D(f,A) = (1/PI)*(0.5+R1*COS(A-ALPHA1)+R2*COS(2*(A-ALPHA2))).
+    
+    R1     =  data['swr1']/100.
+    R2     =  data['swr2']/100.
+
+    E = data['swden']
+    a1 = R1 * np.cos(angle1)
+    b1 = R1 * np.sin(angle1)
+    a2 = R2 * np.cos(angle2)
+    b2 = R2 * np.sin(angle2)            
+    spec = spectral.spectrum1d( {'E':E , 'f':freq, 'loc':dates,
+                                     'a1':a1,'b1':b1,'a2':a2,'b2':b2 } )     
     return( spec )
 
 def getSpec( stationID='46011' , workingdirectory = None, epochtime=None,
