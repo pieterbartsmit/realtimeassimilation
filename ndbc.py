@@ -146,7 +146,7 @@ def getHistorical( years ,  stationID='46011' , workingdirectory = None ):
     for year in years:
         #
         for [index,d] in enumerate(direc):
-            url = 'http://www.ndbc.noaa.gov/data/historical/' + d + '/'+ stationID + \
+            url = 'https://www.ndbc.noaa.gov/data/historical/' + d + '/'+ stationID + \
               sep[index] + '{:4d}'.format(year) + '.txt.gz'
 
             tmp, f , date = getSpectralData( url , workingdirectory ,kind=ikind[index],
