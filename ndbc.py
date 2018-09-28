@@ -1,4 +1,4 @@
-baseurl = 'http://www.ndbc.noaa.gov/data/realtime2/'
+baseurl = 'https://www.ndbc.noaa.gov/data/realtime2/'
 
 def getMeanWindData( epochtime , length=1800 , stationID='46011',workingdirectory='./'  ):
     #
