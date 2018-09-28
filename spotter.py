@@ -320,7 +320,7 @@ class tSpotterlist:
     def addSpotter( self , spotterID,num ):
         #
         #spotter = self.getData( spotterID,endpoint=self.endpoint,num=num )
-        if try:
+        try:
             spotter = self.getData( spotterID,endpoint=self.endpoint,num=num )
         
             self.spotters.append( spotter )
@@ -334,7 +334,7 @@ class tSpotterlist:
                 #
             #        
             self.numSpot = self.numSpot + 1
-        else: #except Exception as e:
+        except Exception as e:
             #
             print( '- could not add spotter ' + spotterID )
             print( str(e) )
