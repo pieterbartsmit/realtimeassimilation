@@ -59,7 +59,6 @@ def getWindData( stationID='46011' , filename='ndbcwind.csv' ):
     #
     data['date'] = dates
     return(data)
-#    time.time
     
 def getSpectralData( url , workingdirectory = None,kind=0,historical=False ):
     '''
@@ -264,7 +263,7 @@ def getLatestSpec(stationID='46012',workingDirectory=None):
 
 def getStationInfo( stationID,workingDirectory=None ):
     #
-    url = 'http://www.ndbc.noaa.gov/data/stations/station_table.txt'
+    url = 'https://www.ndbc.noaa.gov/data/stations/station_table.txt'
     import urllib.request        
     import pandas as pd
     import os

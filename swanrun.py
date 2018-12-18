@@ -13,7 +13,7 @@ def genDirs(directory,dataAssimilation=False):
         #
     else:
         #
-        swanloc = '/mnt/2nd_HDD/swan/41.10.A/OMP/swan.exe'
+        swanloc = '/mnt/2ndHDD/swan/41.10.A/OMP/swan.exe'
         #
         
     if dataAssimilation:
