@@ -203,7 +203,7 @@ class assimilation:
         
         self.numSpotActive = len(activeSpotterList)
 
-        print( 'using ' + str(len(activeSpotterList)) + 'in the assimilation' )
+        print( 'using ' + str(len(activeSpotterList)) + ' buoys in the assimilation' )
         
         E = np.zeros( (self.nf , self.nang) )
         self.confidenceCurve = np.zeros( (self.nf , self.nang) )
@@ -305,7 +305,7 @@ class assimilation:
         #
         if searchBounds is None:
             #
-            searchBounds = [ 0 , 10 ]
+            searchBounds = [ 0 , 2 ]
             #
         #endif
         #
@@ -336,10 +336,11 @@ class assimilation:
         numInt = 5
         for jf in range(0,nf):
             #
-            rms     = np.zeros( 11 )            
+            rms     = np.zeros( numInt )            
             #
-            for kk in range( 0 , 4):
-                #                             
+            for kk in range( 0 , 8):
+                #            
+                print( 'SEARCHBOUND: ' + str( searchBounds ) )                 
                 regvals = np.linspace(searchBounds[0], searchBounds[1],numInt) # [ searchBounds[0], medval ,searchBounds[1] ]
                 
                 jfreq=-1
@@ -347,7 +348,7 @@ class assimilation:
                     jfreq=jf
                 
                 for ik,regval in enumerate(regvals):
-                    #
+                    #                  
                     rms[ik] = self.rmseCostFunction( regval , meanAngles , salt ,seed,
                                                          removeSingularValues,  method , boundaryArguments,jfreq=jfreq )
                     #
@@ -357,11 +358,11 @@ class assimilation:
                 iip   = min( np.argmin( rms ) + 1 , numInt-1) 
              
                 #
-                searchBounds = [  (regval[iim] + regval[iimin]) / 2, (regval[iip] + regval[iimin]) / 2 ]
+                searchBounds = [  regvals[iim] , regvals[iip]  ]
                 par[jf] = regvals[iimin]
                 RMS[jf] = rms[iimin]                     
                 #
-                print( kk,searchBounds,par[jf],RMS[jf])
+                print( par[jf],RMS[jf])
                 #
             #endfor
             #
