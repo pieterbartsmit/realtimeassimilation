@@ -27,7 +27,7 @@ class assimilation:
         self.method = 'exact' #'lsmr'  #Solving method choose between:  'lsmr','exact' ,'COBYLA','SLSQP',    
         self.momentsPerSpotter = momentsPerSpotter
         self.penaltyWeights = [1., 1.,1.,1.,1.]        
-        self.kind = kind           
+        self.kind = kind
 
         # Some properties
         #==============================================================================================
@@ -61,7 +61,7 @@ class assimilation:
     #enddef
     #
         
-    def createMatrix( self, jf, activeSpotterList=None ):
+    def createMatrix( self, jf, activeSpotterList=None,rhs=None ):
         import scipy
         #
         # CreatMatrix:
@@ -107,7 +107,11 @@ class assimilation:
             #
             # Use the maximum matrix entry as a scaling factor
             #
-            factor = np.max( np.abs( mat[ 0 , : ] ) )
+            if not rhs is None:
+                factor = rhs[self.momentsPerSpotter*ip] 
+            else:
+                factor = 1. #np.max( np.abs( mat[ 0 , : ] ) ) 
+            factor = 1.
             scaling[ self.momentsPerSpotter*ip:(self.momentsPerSpotter*(ip+1)) ] = 1. / factor
             
             matrix[ self.momentsPerSpotter*ip:(self.momentsPerSpotter*(ip+1)) , : ] \
@@ -119,7 +123,7 @@ class assimilation:
 
 
         inv = scipy.linalg.pinv( matrix )
-        self.inwardAngles[  np.diag(np.matmul(  inv , matrix )) < 0.1 ] = False
+        #self.inwardAngles[  np.diag(np.matmul(  inv , matrix )) < 0.1 ] = False
 
         if self.limitingAngles is not None:
             #
@@ -141,7 +145,7 @@ class assimilation:
         
         matrix = matrix[ : , self.inwardAngles ]
         self.numVar = matrix.shape[1]
-
+        
         uniqueness = matrix[  0:-1:5,: ] @ matrix[0:-1:5,:].T
         scale      =  np.sqrt(np.diag( uniqueness) )
         
@@ -223,8 +227,8 @@ class assimilation:
             #
             # Create the matrix/rhs
             #
-            matrix,scaling,confidence,uniqueness = self.createMatrix( jf , activeSpotterList = activeSpotterList )
-            rhs    = self.rhs( spec1d , jf , activeSpotterList = activeSpotterList )
+            rhs    = self.rhs( spec1d , jf , activeSpotterList = activeSpotterList )            
+            matrix,scaling,confidence,uniqueness = self.createMatrix( jf , activeSpotterList = activeSpotterList, rhs=rhs )
             rhs    = rhs * scaling
 
 
@@ -299,13 +303,13 @@ class assimilation:
 
     #
     def optimizeRegularizationCoeficients( self , meanAngles , salt = 0.1,seed=0,removeSingularValues=0.9,
-                                               method='norm', boundaryArguments=None,searchBounds=None,perFreq=False ):
+                                               method='norm', boundaryArguments=None,searchBounds=None,perFreq=False,activeSpotterList=None ):
         #
         #
         #
         if searchBounds is None:
             #
-            searchBounds = [ 0 , 2 ]
+            searchBounds = [ 0.01 , 10 ]
             #
         #endif
         #
@@ -333,7 +337,7 @@ class assimilation:
         
         par = np.zeros(nf)
         RMS = np.zeros(nf)
-        numInt = 5
+        numInt = 3
         for jf in range(0,nf):
             #
             rms     = np.zeros( numInt )            
@@ -350,15 +354,26 @@ class assimilation:
                 for ik,regval in enumerate(regvals):
                     #                  
                     rms[ik] = self.rmseCostFunction( regval , meanAngles , salt ,seed,
-                                                         removeSingularValues,  method , boundaryArguments,jfreq=jfreq )
+                                                         removeSingularValues,  method , boundaryArguments,jfreq=jfreq,activeSpotterList=activeSpotterList )
                     #
 
-                iim   = max( np.argmin( rms ) - 1 , 0 )
                 iimin = np.argmin( rms ) 
-                iip   = min( np.argmin( rms ) + 1 , numInt-1) 
+                #iim   = max( np.argmin( rms ) - 1 , 0 )
+                #iip   = min( np.argmin( rms ) + 1 , numInt-1) 
              
                 #
-                searchBounds = [  regvals[iim] , regvals[iip]  ]
+                if iimin==0:
+                    searchBounds = [  regvals[0]/2 , (regvals[0]+regvals[1])/2  ]
+                    
+                if iimin==1:
+                    searchBounds = [  (regvals[0]+regvals[1])/2 , (regvals[1]+regvals[2])/2  ]
+                    
+                if iimin==2:
+                    searchBounds = [  (regvals[1]+regvals[2])/2 , 2*regvals[2] ]                    
+                    
+
+                
+                #searchBounds = [  regvals[iim] , regvals[iip]  ]
                 par[jf] = regvals[iimin]
                 RMS[jf] = rms[iimin]                     
                 #
@@ -370,7 +385,7 @@ class assimilation:
         #
         return(par,RMS)
 
-    def rmseCostFunction( self , regval ,  meanAngles ,salt ,seed, removeSingularValues,  method , boundaryArguments, jfreq=-1):
+    def rmseCostFunction( self , regval ,  meanAngles ,salt ,seed, removeSingularValues,  method , boundaryArguments, jfreq=-1,activeSpotterList=None):
         #
         import spectral
         
@@ -379,17 +394,35 @@ class assimilation:
         optimizeArguments = {
             'removeSingularValues':removeSingularValues,
             'method':method,
-            'jfreq':jfreq
+            'jfreq':jfreq,
+            'activeSpotterList':activeSpotterList
             }        
-        if method == 'norm':
+            
+        if type(method) is not list:
+            method = [method]
+            
+        optimizeArguments['regval'] = [0,0,0,0]
+        if 'norm' in method:
             #
-            optimizeArguments['regval'] = ( regval , 0,0,0 )
+            print( 'norm')
+            optimizeArguments['regval'][0] = regval #.17 #regval
             #
-        elif method == 'exposure':
+            
+        if 'exposure' in method:
             #
-            optimizeArguments['regval'] = ( 0 , 0,0,regval )
+            optimizeArguments['regval'][3] = regval
             #
-
+        
+        if 'slope' in method:
+            #
+            print( 'slope')
+            optimizeArguments['regval'][1] = regval
+            #            
+        if 'curvature' in method:
+            #
+            print( 'curvature')
+            optimizeArguments['regval'][2] = regval
+            #            
             
         
         #
@@ -423,6 +456,7 @@ class assimilation:
         # if the "observations" are obtained from a forward prediction of a given boundary
         # spectrum which is "salted" with random errors to mimick observational uncertainty
 
+        import matplotlib.pyplot as plt
         #Create the observations:
         obs= self.raytracer.prediction(  boundarySpectrum , self.xp , self.yp , 20  )
         obs= obs.Ef()
@@ -430,6 +464,8 @@ class assimilation:
         #salt the observations with random errors
         if salt>0.:
             #
+        #    print(salt)
+            salt=0.05
             obs=obs.salt(salt,seed=seed)
             #
 
@@ -438,7 +474,17 @@ class assimilation:
 
         #calculate rms error compared with boundary
         rms = np.sqrt( np.sum( (boundarySpectrum.E - asim.E)**2,axis=0 )/len(asim.ang) )
-
+       # print(rms)
+      #  print(boundarySpectrum.E.shape)
+        plt.subplot(211)
+        plt.plot( boundarySpectrum.E[:,5]  )
+        plt.plot( asim.E[:,-1]  )
+        plt.subplot(212)
+        plt.plot( boundarySpectrum.E[:,0]  )
+        plt.plot( asim.E[:,0]  )        
+        plt.draw()
+        plt.pause(0.01)        
+        plt.close()
         # return error and asimiated spectrum
         return( rms , asim )
         #
@@ -680,11 +726,18 @@ def regularization( Mat , Rhs , ModelPrior = (0.,) , methods = 'norm', lambda1 =
         #
         ncols = Mat.shape[1]
         
-        for i in range( 1 , ncols ):
+        for i in range( 0 , ncols ):
             #
             vec      = np.zeros( ncols )
-            vec[i  ] =  lambda2
-            vec[i-1] = -lambda2
+            
+            if i==0:
+                vec[i  ] =  lambda2
+                vec[-1 ] = -lambda2            
+            else:
+                vec[i  ] =  lambda2
+                vec[i-1] = -lambda2
+
+
             Rhs      = np.append( Rhs , 0. )
             Mat      = np.concatenate( ( Mat , vec[None,:] ) , axis=0 )
             #
@@ -775,18 +828,20 @@ def regularization( Mat , Rhs , ModelPrior = (0.,) , methods = 'norm', lambda1 =
             #
         #
         # normalize to sum==1
-        exposureVector = exposureVector / np.sum(exposureVector)
+        exposureVector = exposureVector / np.max(exposureVector)
+
         #
         #
         # Add regularization factor
         for i in range( 0 , Mat.shape[1] ):
             #        
            vec      = np.zeros( Mat.shape[1] )
-           vec[i]   = ( 1. - exposureVector[i] ) * lambda4
-           
+           vec[i]   = ( 1. - exposureVector[i] ) * lambda4           
+           print(vec[i])
            Rhs      = np.append( Rhs , 0. )
            Mat      = np.concatenate( ( Mat , vec[None,:] ) , axis=0 )    
         #
+        
     return( Mat , Rhs )
     #
 #end def

@@ -826,8 +826,8 @@ class spectrum1d(tSpectrum):
                 if spec.E[iloc,ifreq] < 0.:
                     spec.E[iloc,ifreq] = 0.
                     
-                r1 = np.sqrt(spec.a1[iloc,ifreq]**2 +  spec.a1[iloc,ifreq]**2)
-                r2 = np.sqrt(spec.a2[iloc,ifreq]**2 +  spec.a2[iloc,ifreq]**2)                    
+                r1 = np.sqrt(spec.a1[iloc,ifreq]**2 +  spec.b1[iloc,ifreq]**2)
+                r2 = np.sqrt(spec.a2[iloc,ifreq]**2 +  spec.b2[iloc,ifreq]**2)                    
 
                 std    = np.abs( r1 * uncertainty / 2.)
                 errors = np.random.normal( loc = 0., scale = std  )
@@ -845,15 +845,15 @@ class spectrum1d(tSpectrum):
                 errors = np.random.normal( loc = 0., scale = std  )
                 spec.b2[iloc,ifreq] = spec.b2[iloc,ifreq] + errors                
 
-                r1 = np.sqrt(spec.a1[iloc,ifreq]**2 +  spec.a1[iloc,ifreq]**2)
-                r2 = np.sqrt(spec.a2[iloc,ifreq]**2 +  spec.a2[iloc,ifreq]**2)
+                r1 = np.sqrt(spec.a1[iloc,ifreq]**2 +  spec.b1[iloc,ifreq]**2)
+                r2 = np.sqrt(spec.a2[iloc,ifreq]**2 +  spec.b2[iloc,ifreq]**2)
 
                 if r1 > 1.:
-                    spec.a1[iloc,ifreq] = spec.a1[iloc,ifreq]/r1/1.01
-                    spec.b1[iloc,ifreq] = spec.b1[iloc,ifreq]/r1/1.01
+                    spec.a1[iloc,ifreq] = spec.a1[iloc,ifreq]/r1 
+                    spec.b1[iloc,ifreq] = spec.b1[iloc,ifreq]/r1
                 if r2 > 1.:
-                    spec.a2[iloc,ifreq] = spec.a2[iloc,ifreq]/r2/1.01
-                    spec.b2[iloc,ifreq] = spec.b2[iloc,ifreq]/r2/1.01
+                    spec.a2[iloc,ifreq] = spec.a2[iloc,ifreq]/r2
+                    spec.b2[iloc,ifreq] = spec.b2[iloc,ifreq]/r2
             #end for ifreq
             #
         #end for iloc

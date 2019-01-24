@@ -400,6 +400,9 @@ def writeDirectionalSpectrum( spec  , workingdirectory='./', filename='spec.swn'
     # 4) return frequency/direction spectrum
     #
 
+    if spec is None:
+        return
+
     if x == None:
         #
         x = [0.]

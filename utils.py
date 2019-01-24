@@ -19,6 +19,25 @@ def loadPoints( filename , epochtime=None ):
         #
     return( data)
     
+def loadTime( filename ):
+    #
+    import os.path
+    import calendar
+    import time
+    import pandas
+    import numpy
+
+    if ( not os.path.isfile(filename) ):
+        #
+        return( [] )
+
+    data = pandas.read_csv( filename,engine='python', header=0 )
+    data.columns = data.columns.str.strip()
+
+    time = numpy.array( data.iloc[-1].tolist() )[1]
+
+    return( time)    
+    
 def writePoints(  epochtime , filename , data , dataNames , formatting ):
     #
     # Apped data to a text file

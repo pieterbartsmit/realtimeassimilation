@@ -457,6 +457,7 @@ class swanrun:
         import numpy
         import ndbc
         import dataAssimilation
+        import time
 
         #
         # SOURCE OF BOUNDARY SPECTRA
@@ -503,8 +504,8 @@ class swanrun:
                 #
                 dirspec=asim.optimize(
                     spec , activeSpotterList = self.spotters.fullSpecIndices,
-                    removeSingularValues=.9, ModelPriorSpec=prior,
-                    method=['norm'],regval=(1.,1.,1.,1.)
+                    removeSingularValues=1., ModelPriorSpec=prior,
+                    method=['norm'],regval=(self.regval,1.,1.,1.)
                     )
                 #                
             else:
@@ -513,7 +514,7 @@ class swanrun:
                 #
                 dirspec=asim.optimize(
                     spec , activeSpotterList = self.spotters.fullSpecIndices,
-                    removeSingularValues=.9,
+                    removeSingularValues=1.,
                     method=['norm'],regval=(self.regval,1.,1.,1.)
                     )
                 #
@@ -547,6 +548,10 @@ class swanrun:
                     print('   - Downloading directional spectrum from NOAA ww3')
                     dirspec = wavewatch3.getSpectrum(epochtime,self.source['dirspec'][1],workingdirectory)
                     #dirspec.constraint( -90 , 180)                    
+                elif self.source['dirspec'][0].lower() == 'disk':
+                    #
+                    t    = time.strftime("%Y%m%d%H%M", time.gmtime( self.simulationtime ) )
+                    dirspec = swan.swanReadSpec( self.source['dirspec'][1] + t + 'W.spc' )
                     #
                 else:
                     #
@@ -557,7 +562,7 @@ class swanrun:
             except:
                 #
                 self.log('Error downloading boundary spectrum - halting simulation')
-                raise Exception('Cannot retrieve ww3 boundary spectrum')
+                #raise Exception('Cannot retrieve ww3 boundary spectrum')
                 #
             #end try
             #
@@ -633,7 +638,7 @@ class swanrun:
     #
 
     #===============================================================================================     
-    def run(self):
+    def run(self , force=False):
     #===============================================================================================         
         #
         import os
@@ -650,6 +655,29 @@ class swanrun:
         import numpy as np
         #
         self.runstart = calendar.timegm( time.gmtime() )
+        
+        if not force:
+            #
+            # Set force is true to force a model restart
+            #
+            try:
+                #
+                dest = self.dirs['log'] + '/' + 'runlist.txt'
+                tmptime = utils.loadTime( dest  )
+                #
+                if tmptime > self.simulationtime:
+                    #
+                    print( '--Run already completed')
+                    return
+                    #
+                #
+            except:
+                #
+                pass
+                #            
+            #
+        #
+        
         #
         cwd = os.getcwd()
         #
@@ -665,6 +693,8 @@ class swanrun:
         # run swan
         #        
         shutil.copyfile( self.commandfilename , 'INPUT')
+        
+        os.putenv('OMP_NUM_THREADS', '3')
         os.system( self.swanloc )
 
         
